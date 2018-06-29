@@ -1,11 +1,25 @@
+echo =======================================================================================
 echo Erasing NAND
 nand erase.chip
-echo Writing SPL (with ECC) to NAND address @NAND_FLASH_START_ADDR@
+echo =======================================================================================
+echo Writing SPL (with ECC)
+echo     from address @SPL_MEMIMG_ADDR@
+echo     to NAND address @NAND_FLASH_START_ADDR@
+echo     size @PADDED_SPL_SIZE_BLOCKS@
 nand write.raw.noverify @SPL_MEMIMG_ADDR@ @NAND_FLASH_START_ADDR@ @PADDED_SPL_SIZE_BLOCKS@
-echo Writing SPL (with ECC) to NAND address @SPL_FLASH_UPPER_ADDR@
+echo =======================================================================================
+echo Writing SPL (with ECC)
+echo     from address @SPL_MEMIMG_ADDR@
+echo     to NAND address @SPL_FLASH_UPPER_ADDR@
+echo     with size @PADDED_SPL_SIZE_BLOCKS@
 nand write.raw.noverify @SPL_MEMIMG_ADDR@ @SPL_FLASH_UPPER_ADDR@ @PADDED_SPL_SIZE_BLOCKS@
-echo Writing UBoot image to address 0x800000
+echo =======================================================================================
+echo Writing UBoot image
+echo     from address @UBOOT_MEMIMG_ADDR@
+echo     to address @UBOOT_FLASH_ADDR@
+echo     size @PADDED_UBOOT_SIZE@
 nand write @UBOOT_MEMIMG_ADDR@ @UBOOT_FLASH_ADDR@ @PADDED_UBOOT_SIZE@
+echo =======================================================================================
 
 # Setup the default environment
 setenv bootargs root=ubi0:rootfs rootfstype=ubifs rw earlyprintk ubi.mtd=4
@@ -24,8 +38,13 @@ setenv video-mode sunxi:640x480-24@60,monitor=composite-ntsc,overscan_x=40,overs
 echo Saving default environment
 saveenv
 
-echo Writing UBI rootfs to NAND address 0x1000000
-nand write.slc-mode.trimffs @UBI_MEMIMG_ADDR@ @UBI_FLASH_ADDR@ @UBI_SIZE@
+echo Writing UBI rootfs
+echo     from @UBI_MEMIMG_ADDR@
+echo     to NAND address @UBI_FLASH_ADDR@
+echo     size @UBI_SIZE@
+echo =======================================================================================
+nand erase.part UBI
+nand write.trimffs @UBI_MEMIMG_ADDR@ @UBI_FLASH_ADDR@ @UBI_SIZE@
 
 
 echo ===========================================================

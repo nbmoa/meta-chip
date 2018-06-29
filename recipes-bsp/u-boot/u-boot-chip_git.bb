@@ -11,8 +11,8 @@ RDEPENDS_${PN}_append_chip = " chip-u-boot-scr"
 UBOOT_VERSION ?= "2016.01"
 PV = "${UBOOT_VERSION}+git${SRCPV}"
 
-SRCREV ?= "c23364e2cd21ef74f7405fa03e537582f062c4c0"
-BRANCH ?= "nextthing/2016.01/chip"
+SRCREV ?= "99c771f6ee154ba7c0c8c45611affd17609a97b0"
+BRANCH ?= "production-mlc"
 SRC_URI = " \
 	git://github.com/NextThingCo/CHIP-u-boot.git;branch=${BRANCH} \
 	file://gcc6.patch \

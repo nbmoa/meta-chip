@@ -7,12 +7,13 @@ COMPATIBLE_MACHINE = "chip"
 
 inherit kernel
 
-LINUX_VERSION ?= "4.3.0"
+LINUX_VERSION ?= "4.4.13-ntc-mlc"
 PV = "${LINUX_VERSION}+git${SRCPV}"
 
-SRCREV ?= "c6f52f1c79744c37bae3bdfb50f626f6317ccc3b"
-BRANCH ?= "debian/4.3.0-ntc-6"
+SRCREV ?= "ae9469864b5bda4ce08d65ceec58a2d256563c7b"
+BRANCH ?= "debian/4.4.13-ntc-mlc"
 SRC_URI = "git://github.com/NextThingCo/CHIP-linux.git;protocol=git;branch=${BRANCH} \
+           file://0001-ubi-Add-null-definition-of-ubi_conso_remove_full_leb.patch \
            file://defconfig \
           "
 
