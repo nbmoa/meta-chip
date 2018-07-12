@@ -13,7 +13,11 @@ PV = "${LINUX_VERSION}+git${SRCPV}"
 SRCREV ?= "ae9469864b5bda4ce08d65ceec58a2d256563c7b"
 BRANCH ?= "debian/4.4.13-ntc-mlc"
 SRC_URI = "git://github.com/NextThingCo/CHIP-linux.git;protocol=git;branch=${BRANCH} \
-           file://0001-ubi-Add-null-definition-of-ubi_conso_remove_full_leb.patch \
+           file://0001-give-up-on-gcc-ilog2-constant-optimizations.patch \
+           file://0001-ARM-remove-duplicate-const-annotations.patch \
+           file://0001-ARM-8748-1-mm-Define-vdso_start-vdso_end-as-array.patch \
+           file://0001-ARM-ux500-fix-prcmu_is_cpu_in_wfi-calculation.patch \
+           file://0001-Fix-compilation-with-gcc-8.patch \
            file://defconfig \
           "
 
