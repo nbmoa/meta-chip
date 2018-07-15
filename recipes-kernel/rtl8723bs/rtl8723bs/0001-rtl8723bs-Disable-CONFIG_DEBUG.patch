@@ -1,0 +1,26 @@
+From be38b827b88c3710a76bf80d695da89d7b8337b7 Mon Sep 17 00:00:00 2001
+From: Drew Moseley <drew.moseley@northern.tech>
+Date: Sun, 15 Jul 2018 15:52:34 -0400
+Subject: [PATCH] rtl8723bs: Disable CONFIG_DEBUG
+
+Signed-off-by: Drew Moseley <drew.moseley@northern.tech>
+---
+ include/autoconf.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/autoconf.h b/include/autoconf.h
+index 5d0d175..c771ea8 100644
+--- a/include/autoconf.h
++++ b/include/autoconf.h
+@@ -310,7 +310,7 @@
+ /*
+  * Debug Related Config
+  */
+-#define CONFIG_DEBUG
++/* #define CONFIG_DEBUG */
+ 
+ #ifdef CONFIG_DEBUG
+ #define DBG	1	// for ODM & BTCOEX debug
+-- 
+2.7.4
+

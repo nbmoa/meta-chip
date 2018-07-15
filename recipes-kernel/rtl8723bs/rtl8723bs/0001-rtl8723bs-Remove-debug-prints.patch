@@ -1,0 +1,164 @@
+From 645132fde579c728656657b8b7c0e09d1ddcb57e Mon Sep 17 00:00:00 2001
+From: Drew Moseley <drew.moseley@northern.tech>
+Date: Sun, 15 Jul 2018 17:42:05 -0400
+Subject: [PATCH] rtl8723bs: Remove debug prints
+
+Signed-off-by: Drew Moseley <drew.moseley@northern.tech>
+---
+ core/rtw_ioctl_set.c       |  5 -----
+ core/rtw_mlme_ext.c        |  6 ------
+ core/rtw_pwrctrl.c         |  2 --
+ core/rtw_xmit.c            |  2 --
+ os_dep/linux/ioctl_linux.c | 10 ----------
+ 5 files changed, 25 deletions(-)
+
+diff --git a/core/rtw_ioctl_set.c b/core/rtw_ioctl_set.c
+index 5ca4a56..1bbf767 100644
+--- a/core/rtw_ioctl_set.c
++++ b/core/rtw_ioctl_set.c
+@@ -326,8 +326,6 @@ u8 rtw_set_802_11_bssid(_adapter* padapter, u8 *bssid)
+ 	
+ _func_enter_;
+ 	
+-	DBG_871X_LEVEL(_drv_always_, "set bssid:%pM\n", bssid);
+-
+ 	if ((bssid[0]==0x00 && bssid[1]==0x00 && bssid[2]==0x00 && bssid[3]==0x00 && bssid[4]==0x00 &&bssid[5]==0x00) ||
+ 	    (bssid[0]==0xFF && bssid[1]==0xFF && bssid[2]==0xFF && bssid[3]==0xFF && bssid[4]==0xFF &&bssid[5]==0xFF))
+ 	{
+@@ -412,9 +410,6 @@ u8 rtw_set_802_11_ssid(_adapter* padapter, NDIS_802_11_SSID *ssid)
+ 	
+ _func_enter_;
+ 	
+-	DBG_871X_LEVEL(_drv_always_, "set ssid [%s] fw_state=0x%08x\n",
+-		       	ssid->Ssid, get_fwstate(pmlmepriv));
+-
+ 	if(padapter->hw_init_completed==_FALSE){
+ 		RT_TRACE(_module_rtl871x_ioctl_set_c_, _drv_err_,
+ 			 ("set_ssid: hw_init_completed==_FALSE=>exit!!!\n"));
+diff --git a/core/rtw_mlme_ext.c b/core/rtw_mlme_ext.c
+index 41ec956..c9f98b1 100644
+--- a/core/rtw_mlme_ext.c
++++ b/core/rtw_mlme_ext.c
+@@ -1821,7 +1821,6 @@ unsigned int OnAuthClient(_adapter *padapter, union recv_frame *precv_frame)
+ 
+ 	if (go2asoc)
+ 	{
+-		DBG_871X_LEVEL(_drv_always_, "auth success, start assoc\n");
+ 		start_clnt_assoc(padapter);
+ 		return _SUCCESS;
+ 	}
+@@ -10774,7 +10773,6 @@ void start_clnt_auth(_adapter* padapter)
+ 	pmlmeext->retry = 0;
+ 
+ 
+-	DBG_871X_LEVEL(_drv_always_, "start auth\n");
+ 	issue_auth(padapter, NULL, 0);
+ 
+ 	set_link_timer(pmlmeext, REAUTH_TO);
+@@ -13364,8 +13362,6 @@ u8 setkey_hdl(_adapter *padapter, u8 *pbuf)
+ 		
+ 		ctrl = BIT(15) | BIT6 |((pparm->algorithm) << 2) | pparm->keyid;
+ 		write_cam(padapter, cam_id, ctrl, addr, pparm->key);
+-		DBG_871X_LEVEL(_drv_always_, "set group key camid:%d, addr:"MAC_FMT", kid:%d, type:%s\n"
+-			,cam_id, MAC_ARG(addr), pparm->keyid, security_type_str(pparm->algorithm));
+ 	}
+ 
+ 	#ifdef DYNAMIC_CAMID_ALLOC
+@@ -13413,8 +13409,6 @@ write_to_cam:
+ 			rtw_camid_free(padapter,cam_id);
+ 		}
+ 	} else {
+-		DBG_871X_LEVEL(_drv_always_, "set pairwise key camid:%d, addr:"MAC_FMT", kid:%d, type:%s\n",
+-			cam_id, MAC_ARG(pparm->addr), pparm->keyid, security_type_str(pparm->algorithm));
+ 		ctrl = BIT(15) | ((pparm->algorithm) << 2) | pparm->keyid;
+ 		write_cam(padapter, cam_id, ctrl, pparm->addr, pparm->key);
+ 	}
+diff --git a/core/rtw_pwrctrl.c b/core/rtw_pwrctrl.c
+index 99236de..39f39df 100644
+--- a/core/rtw_pwrctrl.c
++++ b/core/rtw_pwrctrl.c
+@@ -86,7 +86,6 @@ void _ips_enter(_adapter * padapter)
+ 	if(rf_off == pwrpriv->change_rfpwrstate )
+ 	{	
+ 		pwrpriv->bpower_saving = _TRUE;
+-		DBG_871X_LEVEL(_drv_always_, "nolinked power save enter\n");
+ 
+ 		if(pwrpriv->ips_mode == IPS_LEVEL_2)
+ 			pwrpriv->bkeepfwalive = _TRUE;
+@@ -127,7 +126,6 @@ int _ips_leave(_adapter * padapter)
+ 		if ((result = rtw_ips_pwr_up(padapter)) == _SUCCESS) {
+ 			pwrpriv->rf_pwrstate = rf_on;
+ 		}
+-		DBG_871X_LEVEL(_drv_always_, "nolinked power save leave\n");
+ 		
+ 		DBG_871X("==> ips_leave.....LED(0x%08x)...\n",rtw_read32(padapter,0x4c));
+ 		pwrpriv->bips_processing = _FALSE;
+diff --git a/core/rtw_xmit.c b/core/rtw_xmit.c
+index 7902a73..4e8dd7e 100644
+--- a/core/rtw_xmit.c
++++ b/core/rtw_xmit.c
+@@ -1099,8 +1099,6 @@ static s32 update_attrib(_adapter *padapter, _pkt *pkt, struct pkt_attrib *pattr
+ 		}	
+ 
+ 		
+-	} else if (0x888e == pattrib->ether_type) {
+-		DBG_871X_LEVEL(_drv_always_, "send eapol packet\n");
+ 	}
+ 
+ 	if ( (pattrib->ether_type == 0x888e) || (pattrib->dhcp_pkt == 1) )
+diff --git a/os_dep/linux/ioctl_linux.c b/os_dep/linux/ioctl_linux.c
+index cce7250..b4a0592 100644
+--- a/os_dep/linux/ioctl_linux.c
++++ b/os_dep/linux/ioctl_linux.c
+@@ -247,7 +247,6 @@ void rtw_indicate_wx_assoc_event(_adapter *padapter)
+ 	else
+ 		_rtw_memcpy(wrqu.ap_addr.sa_data, pmlmepriv->cur_network.network.MacAddress, ETH_ALEN);
+ 
+-	DBG_871X_LEVEL(_drv_always_, "assoc success\n");
+ #ifndef CONFIG_IOCTL_CFG80211
+ 	wireless_send_event(padapter->pnetdev, SIOCGIWAP, &wrqu, NULL);
+ #endif
+@@ -263,7 +262,6 @@ void rtw_indicate_wx_disassoc_event(_adapter *padapter)
+ 	_rtw_memset(wrqu.ap_addr.sa_data, 0, ETH_ALEN);
+ 
+ #ifndef CONFIG_IOCTL_CFG80211
+-	DBG_871X_LEVEL(_drv_always_, "indicate disassoc\n");
+ 	wireless_send_event(padapter->pnetdev, SIOCGIWAP, &wrqu, NULL);
+ #endif
+ }
+@@ -8489,8 +8487,6 @@ static int rtw_set_encryption(struct net_device *dev, struct ieee_param *param,
+ 				
+ 				if(strcmp(param->u.crypt.alg, "WEP") == 0)
+ 				{
+-					DBG_871X("%s, set pairwise key, WEP\n", __FUNCTION__);
+-					
+ 					psta->dot118021XPrivacy = _WEP40_;
+ 					if(param->u.crypt.key_len==13)
+ 					{						
+@@ -8499,8 +8495,6 @@ static int rtw_set_encryption(struct net_device *dev, struct ieee_param *param,
+ 				}
+ 				else if(strcmp(param->u.crypt.alg, "TKIP") == 0)
+ 				{						
+-					DBG_871X("%s, set pairwise key, TKIP\n", __FUNCTION__);
+-					
+ 					psta->dot118021XPrivacy = _TKIP_;
+ 				
+ 					//DEBUG_ERR("set key length :param->u.crypt.key_len=%d\n", param->u.crypt.key_len);
+@@ -8514,14 +8508,10 @@ static int rtw_set_encryption(struct net_device *dev, struct ieee_param *param,
+ 				else if(strcmp(param->u.crypt.alg, "CCMP") == 0)
+ 				{
+ 
+-					DBG_871X("%s, set pairwise key, CCMP\n", __FUNCTION__);
+-					
+ 					psta->dot118021XPrivacy = _AES_;
+ 				}
+ 				else
+ 				{
+-					DBG_871X("%s, set pairwise key, none\n", __FUNCTION__);
+-					
+ 					psta->dot118021XPrivacy = _NO_PRIVACY_;
+ 				}
+ 						
+-- 
+2.7.4
+

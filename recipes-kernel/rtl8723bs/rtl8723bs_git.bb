@@ -1,13 +1,15 @@
 SUMMARY = "BS realtek wifi"
 
 LICENSE = "GPLv2"
-LIC_FILES_CHKSUM = "file://core/rtw_ap.c;beginline=3;endline=12;md5=6590b50a1b188fc7e8837b19153acd3f"
+LIC_FILES_CHKSUM = "file://core/rtw_ap.c;beginline=3;endline=12;md5=488c90996933f63c447ef3420cc03079"
 
 inherit module
 
-SRCREV = "db2c4f61d48fe3b47c167c8bcd722ce83c24aca5"
-SRC_URI = "git://github.com/hadess/rtl8723bs.git;protocol=https \
+SRCREV = "e749183f663009c5bd21767153ab1f9911283824"
+SRC_URI = "git://github.com/NextThingCo/RTL8723BS;protocol=https;branch=chip/stable \
            file://0001-rtl8723bs-add-modules_install-and-correct-depmod.patch \
+           file://0001-rtl8723bs-Disable-CONFIG_DEBUG.patch \
+           file://0001-rtl8723bs-Remove-debug-prints.patch \
           "
 
 S = "${WORKDIR}/git"

@@ -1,4 +1,4 @@
-From 875fe3b43fbde8ae2059ce5f8b0715e6a7e290ed Mon Sep 17 00:00:00 2001
+From 01e54c87628793ef67ff3daf959f2a9cfdc5cea0 Mon Sep 17 00:00:00 2001
 From: Jason Abele <jason@jasonabeleconsulting.com>
 Date: Wed, 22 Jul 2015 17:33:59 -0700
 Subject: [PATCH] rtl8723bs: add modules_install and correct depmod
@@ -7,24 +7,24 @@ When building an out of tree module in a cross compile environment,
 respect the $DEPMOD used with the kernel and add a modules_install make
 target.
 ---
- Makefile | 11 +++++++++--
- 1 file changed, 9 insertions(+), 2 deletions(-)
+ Makefile | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index c02cb5b..05eb975 100644
+index f1437d2..38fbe5b 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -7,6 +7,8 @@ EXTRA_CFLAGS += -Wall
- #EXTRA_CFLAGS += -pedantic
- #EXTRA_CFLAGS += -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes
+@@ -23,6 +23,8 @@ EXTRA_LDFLAGS += --strip-debug
+ 
+ CONFIG_AUTOCFG_CP = n
  
 +INSTALL_MOD_PATH := $(PREFIX)
 +
- EXTRA_CFLAGS += -I$(src)/include -I$(src)/hal -g
- 
- ccflags-y += -D__CHECK_ENDIAN__
-@@ -174,6 +176,8 @@ MODDESTDIR := /lib/modules/$(KVER)/kernel/drivers/net/wireless/
- INSTALL_PREFIX :=
+ ########################## WIFI IC ############################
+ CONFIG_MULTIDRV = n
+ CONFIG_RTL8188E = n
+@@ -1431,6 +1433,8 @@ ifneq ($(USER_MODULE_NAME),)
+ MODULE_NAME := $(USER_MODULE_NAME)
  endif
  
 +MODDESTDIR := $(PREFIX)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/wireless/
@@ -32,22 +32,16 @@ index c02cb5b..05eb975 100644
  ifneq ($(KERNELRELEASE),)
  
  rtk_core :=	core/rtw_cmd.o \
-@@ -215,6 +219,9 @@ all: modules
- modules:
+@@ -1494,7 +1498,7 @@ modules:
  	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(shell pwd)  modules
  
-+modules_install:
+ modules_install:
+-	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(shell pwd)  INSTALL_MOD_PATH=$(PREFIX) modules_install
 +	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(shell pwd)  INSTALL_MOD_PATH=$(INSTALL_MOD_PATH) modules_install
-+
+ 
  strip:
  	$(CROSS_COMPILE)strip $(MODULE_NAME).ko --strip-unneeded
- 
-@@ -223,11 +230,11 @@ install:
- 	@mkdir -p /lib/firmware/rtlwifi/
- 	@cp -n rtl8723bs_nic.bin /lib/firmware/rtlwifi/rtl8723bs_nic.bin
- 	@cp -n rtl8723bs_wowlan.bin /lib/firmware/rtlwifi/rtl8723bs_wowlan.bin
--	/sbin/depmod -a ${KVER}
-+	$(DEPMOD) -a ${KVER}
+@@ -1505,7 +1509,7 @@ install:
  
  uninstall:
  	rm -f $(MODDESTDIR)/$(MODULE_NAME).ko
@@ -57,5 +51,5 @@ index c02cb5b..05eb975 100644
  config_r:
  	@echo "make config"
 -- 
-2.0.1
+2.7.4
 
