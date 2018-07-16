@@ -1,44 +1,4 @@
-echo =======================================================================================
-echo Erasing NAND
-nand erase.chip
-echo =======================================================================================
-echo Writing SPL (with ECC)
-echo     from address @SPL_MEMIMG_ADDR@
-echo     to NAND address @NAND_FLASH_START_ADDR@
-echo     size @PADDED_SPL_SIZE_BLOCKS@
-nand write.raw.noverify @SPL_MEMIMG_ADDR@ @NAND_FLASH_START_ADDR@ @PADDED_SPL_SIZE_BLOCKS@
-echo =======================================================================================
-echo Writing SPL (with ECC)
-echo     from address @SPL_MEMIMG_ADDR@
-echo     to NAND address @SPL_FLASH_UPPER_ADDR@
-echo     with size @PADDED_SPL_SIZE_BLOCKS@
-nand write.raw.noverify @SPL_MEMIMG_ADDR@ @SPL_FLASH_UPPER_ADDR@ @PADDED_SPL_SIZE_BLOCKS@
-echo =======================================================================================
-echo Writing UBoot image
-echo     from address @UBOOT_MEMIMG_ADDR@
-echo     to address @UBOOT_FLASH_ADDR@
-echo     size @PADDED_UBOOT_SIZE@
-nand write @UBOOT_MEMIMG_ADDR@ @UBOOT_FLASH_ADDR@ @PADDED_UBOOT_SIZE@
-echo =======================================================================================
-
-# Setup the default environment
-setenv bootargs root=ubi0:rootfs rootfstype=ubifs rw earlyprintk ubi.mtd=4
-setenv bootcmd_ubi 'mtdparts; ubi part UBI; ubifsmount ubi0:rootfs; ubifsload \$fdt_addr_r /boot/sun5i-r8-chip.dtb; ubifsload \$kernel_addr_r /boot/zImage; bootz \$kernel_addr_r - \$fdt_addr_r'
-setenv boot_targets fel ubi usb0 pxe dhcp 
-setenv fel_booted 0
-
-echo Enabling Splash
-setenv stdout serial
-setenv stderr serial
-setenv splashpos m,m
-
-echo Setting Video Mode
-setenv video-mode sunxi:640x480-24@60,monitor=composite-ntsc,overscan_x=40,overscan_y=20
-
-echo Saving default environment
-saveenv
-
-echo Writing UBI rootfs using fastboot
+echo Going to fastboot mode
 fastboot 0
 
 echo ===========================================================
