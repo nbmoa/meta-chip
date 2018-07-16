@@ -16,6 +16,7 @@ BRANCH ?= "production-mlc"
 SRC_URI = " \
 	git://github.com/NextThingCo/CHIP-u-boot.git;branch=${BRANCH} \
 	file://gcc6.patch \
+	file://0001-Add-bootcmd_ubi-support-for-sunxi-boards.patch \
 	"
 S = "${WORKDIR}/git"
 
