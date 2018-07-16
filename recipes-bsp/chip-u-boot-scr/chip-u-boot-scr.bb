@@ -70,14 +70,29 @@ do_deploy() {
 	        exit -1
 	    fi
 	fi
-	
-	PADDED_SPL_SIZE_BLOCKS=$(stat --dereference --printf="%s" "${DEPLOY_DIR_IMAGE}/${SPL_ECC_BINARY}")
-	${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel spl ${DEPLOY_DIR_IMAGE}/${SPL_BINARY}
-	${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel --progress write ${SPL_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/${SPL_ECC_BINARY}
-	${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel --progress write ${UBOOT_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/${UBOOT_BINARY}
-	${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel --progress write ${SCRIPTADDR} ${DEPLOY_DIR_IMAGE}/boot.scr
-	${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel --progress write ${UBI_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/\${UBI_IMAGE}
-	${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel exe ${UBOOT_MEMIMG_ADDR}
+
+	wait_for_fel() {
+	    echo -n "waiting for fel..."
+	    for i in {30..0}; do
+	        if ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel ver 2>/dev/null >/dev/null; then
+	            echo "OK"
+	            return 0
+	        fi
+	        echo -n "."
+	        sleep 1
+            done
+	    echo "TIMEOUT"
+	    return 1
+	}
+
+	if wait_for_fel; then
+	    ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel spl ${DEPLOY_DIR_IMAGE}/${SPL_BINARY}
+	    ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel --progress write ${SPL_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/${SPL_ECC_BINARY}
+	    ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel --progress write ${UBOOT_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/${UBOOT_BINARY}
+	    ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel --progress write ${SCRIPTADDR} ${DEPLOY_DIR_IMAGE}/boot.scr
+	    ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel --progress write ${UBI_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/\${UBI_IMAGE}
+	    ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel exe ${UBOOT_MEMIMG_ADDR}
+	fi
 	EOF
     chmod +x ${DEPLOYDIR}/flash_CHIP_board.sh-${PV}-${PR}
 
