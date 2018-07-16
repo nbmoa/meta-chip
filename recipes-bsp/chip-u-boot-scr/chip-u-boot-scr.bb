@@ -15,11 +15,8 @@ SPL_FLASH_UPPER_ADDR = "0x400000"
 LED_I2C_CHIP = "0x34"
 LED_I2C_ADDR = "0x93"
 UBOOT_FLASH_ADDR = "0x800000"
-UBI_MEMIMG_ADDR = "0x4b000000"
-UBI_FLASH_ADDR = "0x1000000"
 OOB_SIZE = "1664"
 SCRIPTADDR = "0x43100000"
-UBI_SIZE="0x0A000000"
 
 do_compile[depends] += "u-boot-chip:do_deploy"
 do_compile() {
@@ -37,9 +34,6 @@ do_compile() {
         -e "s,@PADDED_SPL_SIZE_BLOCKS@,${PADDED_SPL_SIZE_BLOCKS},g" \
         -e "s,@PADDED_UBOOT_SIZE@,${PADDED_UBOOT_SIZE},g" \
         -e "s,@UBOOT_FLASH_ADDR@,${UBOOT_FLASH_ADDR},g" \
-        -e "s,@UBI_FLASH_ADDR@,${UBI_FLASH_ADDR},g" \
-        -e "s,@UBI_MEMIMG_ADDR@,${UBI_MEMIMG_ADDR},g" \
-        -e "s,@UBI_SIZE@,${UBI_SIZE},g" \
         < "${WORKDIR}/boot.cmd.in" > "${WORKDIR}/boot.cmd"
     mkimage -A arm -T script -C none -n "Boot script" -d "${WORKDIR}/boot.cmd" "${WORKDIR}/boot.scr"
 }
@@ -60,21 +54,22 @@ do_deploy() {
 	elif [ ! -e "${DEPLOY_DIR_IMAGE}/\${UBI_IMAGE}" ]; then
 	    echo "Error: UBI_IMAGE file \"${DEPLOY_DIR_IMAGE}/\${UBI_IMAGE}\" does not exist."
 	    exit -1
-	else
-	    CURRENT_UBI_SIZE=\$(stat --dereference --printf="%s" ${DEPLOY_DIR_IMAGE}/\${UBI_IMAGE})
-	    MAX_UBI_SIZE=\$(printf %d ${UBI_SIZE})
-	    if [ \${CURRENT_UBI_SIZE} -gt \${MAX_UBI_SIZE} ]; then
-	        echo "Error: UBI_IMAGE file \"${DEPLOY_DIR_IMAGE}/\${UBI_IMAGE}\" is too large."
-	        echo "Current file size is \${CURRENT_UBI_SIZE}"
-	        echo "Max file size is \${MAX_UBI_SIZE}"
-	        exit -1
-	    fi
 	fi
 
 	if ! type -path sunxi-fel > /dev/null 2>/dev/null; then
-	   echo Unable to find sunxi-fel in PATH.
-	   echo Please install the sunxi utilities for your desktop OS.
-	   exit -1
+	    echo Unable to find sunxi-fel in PATH.
+	    echo Please install the sunxi utilities for your desktop OS.
+	    exit -1
+	fi
+	if ! type -path img2simg > /dev/null 2>/dev/null; then
+	    echo Unable to find img2simg in PATH.
+	    echo Please install the Android fastboot and related utilities for your desktop OS.
+	    exit -1
+	fi
+	if ! type -path fastboot > /dev/null 2>/dev/null; then
+	    echo Unable to find fastboot in PATH.
+	    echo Please install the Android fastboot and related utilities for your desktop OS.
+	    exit -1
 	fi
 
 	wait_for_fel() {
@@ -86,18 +81,38 @@ do_deploy() {
 	        fi
 	        echo -n "."
 	        sleep 1
-            done
+	    done
 	    echo "TIMEOUT"
 	    return 1
 	}
-
+	FASTBOOT="fastboot -i 0x1f3a"
+	wait_for_fastboot() {
+	    echo -n "waiting for fastboot..."
+	    for i in {30..0}; do
+	        if [[ ! -z "\$(\${FASTBOOT} devices)" ]]; then
+	            echo "OK"
+	            return 0
+	        fi
+	        echo -n "."
+	        sleep 1
+	    done
+	    echo "TIMEOUT"
+	    return 1
+	}
 	if wait_for_fel; then
 	    sunxi-fel spl ${DEPLOY_DIR_IMAGE}/${SPL_BINARY}
 	    sunxi-fel --progress write ${SPL_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/${SPL_ECC_BINARY}
 	    sunxi-fel --progress write ${UBOOT_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/${UBOOT_BINARY}
 	    sunxi-fel --progress write ${SCRIPTADDR} ${DEPLOY_DIR_IMAGE}/boot.scr
-	    sunxi-fel --progress write ${UBI_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/\${UBI_IMAGE}
 	    sunxi-fel exe ${UBOOT_MEMIMG_ADDR}
+
+	    if wait_for_fastboot; then
+	        SIMG=\$(mktemp --suffix .ubi.sparse)
+	        img2simg ${DEPLOY_DIR_IMAGE}/\${UBI_IMAGE} \${SIMG} ${CHIP_UBI_PAGE_SIZE}
+	        \${FASTBOOT} flash UBI \${SIMG}
+	        echo rm -f \${SIMG}
+	        \${FASTBOOT} continue
+	    fi
 	fi
 	EOF
     chmod +x ${DEPLOYDIR}/flash_CHIP_board.sh-${PV}-${PR}

@@ -38,14 +38,8 @@ setenv video-mode sunxi:640x480-24@60,monitor=composite-ntsc,overscan_x=40,overs
 echo Saving default environment
 saveenv
 
-echo Writing UBI rootfs
-echo     from @UBI_MEMIMG_ADDR@
-echo     to NAND address @UBI_FLASH_ADDR@
-echo     size @UBI_SIZE@
-echo =======================================================================================
-nand erase.part UBI
-nand write.trimffs @UBI_MEMIMG_ADDR@ @UBI_FLASH_ADDR@ @UBI_SIZE@
-
+echo Writing UBI rootfs using fastboot
+fastboot 0
 
 echo ===========================================================
 echo Flashing Complete.  Please power down and disable FEL mode.
