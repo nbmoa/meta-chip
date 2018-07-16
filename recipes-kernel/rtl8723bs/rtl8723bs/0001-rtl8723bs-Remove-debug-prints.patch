@@ -1,19 +1,22 @@
-From 645132fde579c728656657b8b7c0e09d1ddcb57e Mon Sep 17 00:00:00 2001
+From 7c74848a7198ed71a31e3286414e12b4dc44fc20 Mon Sep 17 00:00:00 2001
 From: Drew Moseley <drew.moseley@northern.tech>
 Date: Sun, 15 Jul 2018 17:42:05 -0400
 Subject: [PATCH] rtl8723bs: Remove debug prints
 
 Signed-off-by: Drew Moseley <drew.moseley@northern.tech>
 ---
- core/rtw_ioctl_set.c       |  5 -----
- core/rtw_mlme_ext.c        |  6 ------
- core/rtw_pwrctrl.c         |  2 --
- core/rtw_xmit.c            |  2 --
- os_dep/linux/ioctl_linux.c | 10 ----------
- 5 files changed, 25 deletions(-)
+ core/rtw_ioctl_set.c          | 13 -------------
+ core/rtw_mlme_ext.c           | 41 -----------------------------------------
+ core/rtw_odm.c                | 28 ----------------------------
+ core/rtw_pwrctrl.c            |  2 --
+ core/rtw_xmit.c               |  2 --
+ os_dep/linux/ioctl_cfg80211.c |  5 ++---
+ os_dep/linux/ioctl_linux.c    | 10 ----------
+ os_dep/linux/recv_linux.c     |  3 ---
+ 8 files changed, 2 insertions(+), 102 deletions(-)
 
 diff --git a/core/rtw_ioctl_set.c b/core/rtw_ioctl_set.c
-index 5ca4a56..1bbf767 100644
+index 25b1687..3243267 100644
 --- a/core/rtw_ioctl_set.c
 +++ b/core/rtw_ioctl_set.c
 @@ -326,8 +326,6 @@ u8 rtw_set_802_11_bssid(_adapter* padapter, u8 *bssid)
@@ -32,14 +35,54 @@ index 5ca4a56..1bbf767 100644
 -	DBG_871X_LEVEL(_drv_always_, "set ssid [%s] fw_state=0x%08x\n",
 -		       	ssid->Ssid, get_fwstate(pmlmepriv));
 -
- 	if(padapter->hw_init_completed==_FALSE){
+ 	if (!rtw_is_hw_init_completed(padapter)) {
  		RT_TRACE(_module_rtl871x_ioctl_set_c_, _drv_err_,
  			 ("set_ssid: hw_init_completed==_FALSE=>exit!!!\n"));
+@@ -543,8 +538,6 @@ _func_enter_;
+ 		bssid_valid = _FALSE;
+ 
+ 	if (ssid_valid == _FALSE && bssid_valid == _FALSE) {
+-		DBG_871X(FUNC_ADPT_FMT" ssid:%p, ssid_valid:%d, bssid:%p, bssid_valid:%d\n",
+-			FUNC_ADPT_ARG(padapter), ssid, ssid_valid, bssid, bssid_valid);
+ 		status = _FAIL;
+ 		goto exit;
+ 	}
+@@ -558,9 +551,6 @@ _func_enter_;
+ 
+ 	_enter_critical_bh(&pmlmepriv->lock, &irqL);
+ 
+-	DBG_871X_LEVEL(_drv_always_, FUNC_ADPT_FMT"  fw_state=0x%08x\n",
+-		FUNC_ADPT_ARG(padapter), get_fwstate(pmlmepriv));
+-
+ 	if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY) == _TRUE) {
+ 		goto handle_tkip_countermeasure;
+ 	} else if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING) == _TRUE) {
+@@ -755,7 +745,6 @@ _func_enter_;
+ 		}
+ 	} else {		
+ 		if (rtw_is_scan_deny(padapter)) {
+-			DBG_871X(FUNC_ADPT_FMT": scan deny\n", FUNC_ADPT_ARG(padapter));
+ 			indicate_wx_scan_complete_event(padapter);
+ 			return _SUCCESS;
+ 		}
+@@ -1466,12 +1455,10 @@ int rtw_set_country(_adapter *adapter, const char *country_code)
+ int rtw_set_band(_adapter *adapter, u8 band)
+ {
+ 	if (rtw_band_valid(band)) {
+-		DBG_871X(FUNC_ADPT_FMT" band:%d\n", FUNC_ADPT_ARG(adapter), band);
+ 		adapter->setband = band;
+ 		return _SUCCESS;
+ 	}
+ 
+-	DBG_871X_LEVEL(_drv_always_, FUNC_ADPT_FMT" band:%d fail\n", FUNC_ADPT_ARG(adapter), band);
+ 	return _FAIL;
+ }
+ 
 diff --git a/core/rtw_mlme_ext.c b/core/rtw_mlme_ext.c
-index 41ec956..c9f98b1 100644
+index 455e3b4..f1f6b86 100755
 --- a/core/rtw_mlme_ext.c
 +++ b/core/rtw_mlme_ext.c
-@@ -1821,7 +1821,6 @@ unsigned int OnAuthClient(_adapter *padapter, union recv_frame *precv_frame)
+@@ -2264,7 +2264,6 @@ unsigned int OnAuthClient(_adapter *padapter, union recv_frame *precv_frame)
  
  	if (go2asoc)
  	{
@@ -47,7 +90,7 @@ index 41ec956..c9f98b1 100644
  		start_clnt_assoc(padapter);
  		return _SUCCESS;
  	}
-@@ -10774,7 +10773,6 @@ void start_clnt_auth(_adapter* padapter)
+@@ -11045,7 +11044,6 @@ void start_clnt_auth(_adapter* padapter)
  	pmlmeext->retry = 0;
  
  
@@ -55,16 +98,63 @@ index 41ec956..c9f98b1 100644
  	issue_auth(padapter, NULL, 0);
  
  	set_link_timer(pmlmeext, REAUTH_TO);
-@@ -13364,8 +13362,6 @@ u8 setkey_hdl(_adapter *padapter, u8 *pbuf)
- 		
- 		ctrl = BIT(15) | BIT6 |((pparm->algorithm) << 2) | pparm->keyid;
- 		write_cam(padapter, cam_id, ctrl, addr, pparm->key);
--		DBG_871X_LEVEL(_drv_always_, "set group key camid:%d, addr:"MAC_FMT", kid:%d, type:%s\n"
--			,cam_id, MAC_ARG(addr), pparm->keyid, security_type_str(pparm->algorithm));
- 	}
+@@ -14276,16 +14274,12 @@ u8 setkey_hdl(_adapter *padapter, u8 *pbuf)
+ 	if (used == _TRUE && rtw_camid_is_gk(padapter, cam_id) == _FALSE) {
+ 		s16 camid_clr;
+ 
+-		DBG_871X_LEVEL(_drv_always_, FUNC_ADPT_FMT" group key with "MAC_FMT" id:%u the same key id as pairwise key\n"
+-			, FUNC_ADPT_ARG(padapter), MAC_ARG(addr), pparm->keyid);
+-
+ 		/* HW has problem to distinguish this group key with existing pairwise key, stop HW enc and dec for BMC */
+ 		rtw_camctl_set_flags(padapter, SEC_STATUS_STA_PK_GK_CONFLICT_DIS_BMC_SEARCH);
+ 		rtw_hal_set_hwreg(padapter, HW_VAR_SEC_CFG, NULL);
+ 
+ 		/* clear group key */
+ 		while ((camid_clr = rtw_camid_search(padapter, addr, -1, 1)) >= 0) {
+-			DBG_871X_LEVEL(_drv_always_, "clear group key for addr:"MAC_FMT", camid:%d\n", MAC_ARG(addr), camid_clr);
+ 			clear_cam_entry(padapter, camid_clr);
+ 			rtw_camid_free(padapter, camid_clr);
+ 		}
+@@ -14295,8 +14289,6 @@ u8 setkey_hdl(_adapter *padapter, u8 *pbuf)
+ 	#endif
+ 
+ 	ctrl = BIT(15) | BIT6 | ((pparm->algorithm) << 2) | pparm->keyid;
+-	DBG_871X_LEVEL(_drv_always_, "set group key camid:%d, addr:"MAC_FMT", kid:%d, type:%s\n"
+-		, cam_id, MAC_ARG(addr), pparm->keyid, security_type_str(pparm->algorithm));
+ 	write_cam(padapter, cam_id, ctrl, addr, pparm->key);
  
  	#ifdef DYNAMIC_CAMID_ALLOC
-@@ -13413,8 +13409,6 @@ write_to_cam:
+@@ -14338,7 +14330,6 @@ u8 set_stakey_hdl(_adapter *padapter, u8 *pbuf)
+ 
+ 	psta = rtw_get_stainfo(pstapriv, pparm->addr);
+ 	if (!psta) {
+-		DBG_871X_LEVEL(_drv_always_, "%s sta:"MAC_FMT" not found\n", __func__, MAC_ARG(pparm->addr));
+ 		ret = H2C_REJECTED;
+ 		goto exit;
+ 	}
+@@ -14353,16 +14344,12 @@ u8 set_stakey_hdl(_adapter *padapter, u8 *pbuf)
+ 	if (used == _TRUE && rtw_camid_is_gk(padapter, cam_id) == _TRUE) {
+ 		s16 camid_clr;
+ 
+-		DBG_871X_LEVEL(_drv_always_, FUNC_ADPT_FMT" pairwise key with "MAC_FMT" id:%u the same key id as group key\n"
+-			, FUNC_ADPT_ARG(padapter), MAC_ARG(pparm->addr), pparm->keyid);
+-
+ 		/* HW has problem to distinguish this pairwise key with existing group key, stop HW enc and dec for BMC */
+ 		rtw_camctl_set_flags(padapter, SEC_STATUS_STA_PK_GK_CONFLICT_DIS_BMC_SEARCH);
+ 		rtw_hal_set_hwreg(padapter, HW_VAR_SEC_CFG, NULL);
+ 
+ 		/* clear group key */
+ 		while ((camid_clr = rtw_camid_search(padapter, pparm->addr, -1, 1)) >= 0) {
+-			DBG_871X_LEVEL(_drv_always_, "clear group key for addr:"MAC_FMT", camid:%d\n", MAC_ARG(pparm->addr), camid_clr);
+ 			clear_cam_entry(padapter, camid_clr);
+ 			rtw_camid_free(padapter, camid_clr);
+ 		}
+@@ -14372,13 +14359,10 @@ u8 set_stakey_hdl(_adapter *padapter, u8 *pbuf)
+ write_to_cam:
+ 	if(pparm->algorithm == _NO_PRIVACY_) {
+ 		while ((cam_id = rtw_camid_search(padapter, pparm->addr, -1, -1)) >= 0) {
+-			DBG_871X_LEVEL(_drv_always_, "clear key for addr:"MAC_FMT", camid:%d\n", MAC_ARG(pparm->addr), cam_id);
+ 			clear_cam_entry(padapter, cam_id);
  			rtw_camid_free(padapter,cam_id);
  		}
  	} else {
@@ -73,11 +163,187 @@ index 41ec956..c9f98b1 100644
  		ctrl = BIT(15) | ((pparm->algorithm) << 2) | pparm->keyid;
  		write_cam(padapter, cam_id, ctrl, pparm->addr, pparm->key);
  	}
+@@ -14899,12 +14883,9 @@ int rtw_chk_start_clnt_join(_adapter *adapter, u8 *ch, u8 *bw, u8 *offset)
+ 
+ 	if (cur_ch == 0) {
+ 		connect_allow = _FALSE;
+-		DBG_871X_LEVEL(_drv_err_, FUNC_ADPT_FMT" cur_ch:%u\n"
+-			, FUNC_ADPT_ARG(adapter), cur_ch);
+ 		rtw_warn_on(1);
+ 		goto exit;
+ 	}
+-	DBG_871X(FUNC_ADPT_FMT" req: %u,%u,%u\n", FUNC_ADPT_ARG(adapter), u_ch, u_bw, u_offset);
+ 
+ #ifdef CONFIG_CONCURRENT_MODE
+ {
+@@ -14922,8 +14903,6 @@ int rtw_chk_start_clnt_join(_adapter *adapter, u8 *ch, u8 *bw, u8 *offset)
+ 	dvobj = adapter_to_dvobj(adapter);
+ 
+ 	rtw_dev_iface_status_no_self(adapter, &sta_num, &ld_sta_num, &lg_sta_num, &ap_num, &ld_ap_num);
+-	DBG_871X(FUNC_ADPT_FMT" ld_sta_num:%u, ap_num:%u\n"
+-		, FUNC_ADPT_ARG(adapter), ld_sta_num, ap_num);
+ 
+ 	if (!ld_sta_num && !ap_num) {
+ 		/* consider linking STA? */
+@@ -14934,15 +14913,11 @@ int rtw_chk_start_clnt_join(_adapter *adapter, u8 *ch, u8 *bw, u8 *offset)
+ 		dump_adapters_status(RTW_DBGDUMP , dvobj);
+ 		rtw_warn_on(1);
+ 	}
+-	DBG_871X(FUNC_ADPT_FMT" union no self: %u,%u,%u\n"
+-		, FUNC_ADPT_ARG(adapter), u_ch, u_bw, u_offset);
+ 
+ 	/* chbw_allow? */
+ 	chbw_allow = rtw_is_chbw_grouped(pmlmeext->cur_channel, pmlmeext->cur_bwmode, pmlmeext->cur_ch_offset
+ 		, u_ch, u_bw, u_offset);
+ 
+-	DBG_871X(FUNC_ADPT_FMT" chbw_allow:%d\n"
+-		, FUNC_ADPT_ARG(adapter), chbw_allow);
+ 
+ 	if (chbw_allow == _TRUE) {
+ 		rtw_sync_chbw(&cur_ch, &cur_bw, &cur_ch_offset, &u_ch, &u_bw, &u_offset);
+@@ -14970,8 +14945,6 @@ int rtw_chk_start_clnt_join(_adapter *adapter, u8 *ch, u8 *bw, u8 *offset)
+ 		}
+ 		#endif /* CONFIG_CFG80211_ONECHANNEL_UNDER_CONCURRENT */
+ 	}
+-	DBG_871X(FUNC_ADPT_FMT" connect_allow:%d\n"
+-		, FUNC_ADPT_ARG(adapter), connect_allow);
+ 
+ 	if (connect_allow == _FALSE)
+ 		goto exit;
+@@ -15023,7 +14996,6 @@ connect_allow_hdl:
+ exit:
+ 
+ 	if (connect_allow == _TRUE) {
+-		DBG_871X(FUNC_ADPT_FMT" union: %u,%u,%u\n", FUNC_ADPT_ARG(adapter), u_ch, u_bw, u_offset);
+ 		*ch = u_ch;
+ 		*bw = u_bw;
+ 		*offset = u_offset;
+@@ -15189,10 +15161,6 @@ u8 set_ch_hdl(_adapter *padapter, u8 *pbuf)
+ 
+ 	set_ch_parm = (struct set_ch_parm *)pbuf;
+ 
+-	DBG_871X(FUNC_NDEV_FMT" ch:%u, bw:%u, ch_offset:%u\n",
+-		FUNC_NDEV_ARG(padapter->pnetdev),
+-		set_ch_parm->ch, set_ch_parm->bw, set_ch_parm->ch_offset);
+-
+ 	pmlmeext->cur_channel = set_ch_parm->ch;
+ 	pmlmeext->cur_ch_offset = set_ch_parm->ch_offset;
+ 	pmlmeext->cur_bwmode = set_ch_parm->bw;
+@@ -15265,7 +15233,6 @@ u8 set_csa_hdl(_adapter *padapter, unsigned char *pbuf)
+ 
+ 	rtw_hal_set_hwreg(padapter, HW_VAR_TXPAUSE, &sval8);
+ 
+-	DBG_871X("DFS detected! Swiching channel to %d!\n", new_ch_no);
+ 	SelectChannel(padapter, new_ch_no);
+ 
+ 	rtw_hal_set_hwreg(padapter, HW_VAR_TXPAUSE, &gval8);
+@@ -15275,10 +15242,6 @@ u8 set_csa_hdl(_adapter *padapter, unsigned char *pbuf)
+ 	rtw_free_assoc_resources(padapter, 1);
+ 	rtw_free_network_queue(padapter, _TRUE);
+ 
+-	if ( ((new_ch_no >= 52) && (new_ch_no <= 64)) ||((new_ch_no >= 100) && (new_ch_no <= 140)) ) {
+-		DBG_871X("Switched to DFS band (ch %02x) again!!\n", new_ch_no);
+-	}
+-
+ 	return 	H2C_SUCCESS;
+ #else
+ 	return	H2C_REJECTED;
+@@ -15336,7 +15299,6 @@ u8 tdls_hdl(_adapter *padapter, unsigned char *pbuf)
+ 			rtw_pwr_wakeup(padapter);
+ 
+ 		rtw_hal_set_hwreg(padapter, HW_VAR_TDLS_WRCR, 0);
+-		DBG_871X("Created Direct Link with "MAC_FMT"\n", MAC_ARG(ptdls_sta->hwaddr));
+ 
+ 		/* Set TDLS sta rate. */
+ 		/* Update station supportRate */
+@@ -15385,7 +15347,6 @@ u8 tdls_hdl(_adapter *padapter, unsigned char *pbuf)
+ 
+ 		issue_nulldata(padapter, NULL, 1, 3, 3);
+ 
+-		DBG_871X("[TDLS ] issue tdls channel switch response\n");
+ 		ret = issue_tdls_ch_switch_rsp(padapter, &txmgmt, _TRUE);
+ 
+ 		/* If we receive TDLS_CH_SW_REQ at off channel which it's target is AP's channel */
+@@ -15485,7 +15446,6 @@ u8 tdls_hdl(_adapter *padapter, unsigned char *pbuf)
+ #endif		
+ 	case TDLS_RS_RCR:
+ 		rtw_hal_set_hwreg(padapter, HW_VAR_TDLS_RS_RCR, 0);
+-		DBG_871X("[TDLS] write REG_RCR, set bit6 on\n");
+ 		break;
+ 	case TDLS_TEARDOWN_STA:
+ 		_rtw_memset(&txmgmt, 0x00, sizeof(struct tdls_txmgmt));
+@@ -15563,7 +15523,6 @@ u8 rtw_getmacreg_hdl(_adapter *padapter, u8 *pbuf)
+ 		DBG_871X("%s: Unknown size\n", __func__);
+ 		break;
+ 	}
+-	DBG_871X("%s: addr:0x%02x valeu:0x%02x\n", __func__, addr, value);
+ 
+ 	return H2C_SUCCESS;
+ }
+diff --git a/core/rtw_odm.c b/core/rtw_odm.c
+index 7b733a9..ff0410e 100644
+--- a/core/rtw_odm.c
++++ b/core/rtw_odm.c
+@@ -195,15 +195,6 @@ void rtw_odm_adaptivity_en_msg(void *sel, _adapter *adapter)
+ 	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(adapter);
+ 	DM_ODM_T *odm = &hal_data->odmpriv;
+ 
+-	DBG_871X_SEL_NL(sel, "RTW_ADAPTIVITY_EN_");
+-
+-	if (regsty->adaptivity_en == RTW_ADAPTIVITY_EN_DISABLE) {
+-		DBG_871X_SEL(sel, "DISABLE\n");
+-	} else if (regsty->adaptivity_en == RTW_ADAPTIVITY_EN_ENABLE) {
+-		DBG_871X_SEL(sel, "ENABLE\n");
+-	} else {
+-		DBG_871X_SEL(sel, "INVALID\n");
+-	}
+ }
+ 
+ #define RTW_ADAPTIVITY_MODE_NORMAL 0
+@@ -213,15 +204,6 @@ void rtw_odm_adaptivity_mode_msg(void *sel, _adapter *adapter)
+ {
+ 	struct registry_priv *regsty = &adapter->registrypriv;
+ 
+-	DBG_871X_SEL_NL(sel, "RTW_ADAPTIVITY_MODE_");
+-
+-	if (regsty->adaptivity_mode == RTW_ADAPTIVITY_MODE_NORMAL) {
+-		DBG_871X_SEL(sel, "NORMAL\n");
+-	} else if (regsty->adaptivity_mode == RTW_ADAPTIVITY_MODE_CARRIER_SENSE) {
+-		DBG_871X_SEL(sel, "CARRIER_SENSE\n");
+-	} else {
+-		DBG_871X_SEL(sel, "INVALID\n");
+-	}
+ }
+ 
+ #define RTW_ADAPTIVITY_DML_DISABLE 0
+@@ -231,22 +213,12 @@ void rtw_odm_adaptivity_dml_msg(void *sel, _adapter *adapter)
+ {
+ 	struct registry_priv *regsty = &adapter->registrypriv;
+ 
+-	DBG_871X_SEL_NL(sel, "RTW_ADAPTIVITY_DML_");
+-
+-	if (regsty->adaptivity_dml == RTW_ADAPTIVITY_DML_DISABLE) {
+-		DBG_871X_SEL(sel, "DISABLE\n");
+-	} else if (regsty->adaptivity_dml == RTW_ADAPTIVITY_DML_ENABLE) {
+-		DBG_871X_SEL(sel, "ENABLE\n");
+-	} else {
+-		DBG_871X_SEL(sel, "INVALID\n");
+-	}
+ }
+ 
+ void rtw_odm_adaptivity_dc_backoff_msg(void *sel, _adapter *adapter)
+ {
+ 	struct registry_priv *regsty = &adapter->registrypriv;
+ 
+-	DBG_871X_SEL_NL(sel, "RTW_ADAPTIVITY_DC_BACKOFF:%u\n", regsty->adaptivity_dc_backoff);
+ }
+ 
+ void rtw_odm_adaptivity_config_msg(void *sel, _adapter *adapter)
 diff --git a/core/rtw_pwrctrl.c b/core/rtw_pwrctrl.c
-index 99236de..39f39df 100644
+index 2f0b700..b712cb4 100644
 --- a/core/rtw_pwrctrl.c
 +++ b/core/rtw_pwrctrl.c
-@@ -86,7 +86,6 @@ void _ips_enter(_adapter * padapter)
+@@ -87,7 +87,6 @@ void _ips_enter(_adapter * padapter)
  	if(rf_off == pwrpriv->change_rfpwrstate )
  	{	
  		pwrpriv->bpower_saving = _TRUE;
@@ -85,7 +351,7 @@ index 99236de..39f39df 100644
  
  		if(pwrpriv->ips_mode == IPS_LEVEL_2)
  			pwrpriv->bkeepfwalive = _TRUE;
-@@ -127,7 +126,6 @@ int _ips_leave(_adapter * padapter)
+@@ -128,7 +127,6 @@ int _ips_leave(_adapter * padapter)
  		if ((result = rtw_ips_pwr_up(padapter)) == _SUCCESS) {
  			pwrpriv->rf_pwrstate = rf_on;
  		}
@@ -94,23 +360,53 @@ index 99236de..39f39df 100644
  		DBG_871X("==> ips_leave.....LED(0x%08x)...\n",rtw_read32(padapter,0x4c));
  		pwrpriv->bips_processing = _FALSE;
 diff --git a/core/rtw_xmit.c b/core/rtw_xmit.c
-index 7902a73..4e8dd7e 100644
+index 04dedd3..d89a267 100755
 --- a/core/rtw_xmit.c
 +++ b/core/rtw_xmit.c
-@@ -1099,8 +1099,6 @@ static s32 update_attrib(_adapter *padapter, _pkt *pkt, struct pkt_attrib *pattr
- 		}	
+@@ -1160,8 +1160,6 @@ static s32 update_attrib(_adapter *padapter, _pkt *pkt, struct pkt_attrib *pattr
+ 			}
+ 		}
  
- 		
 -	} else if (0x888e == pattrib->ether_type) {
 -		DBG_871X_LEVEL(_drv_always_, "send eapol packet\n");
  	}
  
- 	if ( (pattrib->ether_type == 0x888e) || (pattrib->dhcp_pkt == 1) )
+ 	if ((pattrib->ether_type == 0x888e) || (pattrib->dhcp_pkt == 1))
+diff --git a/os_dep/linux/ioctl_cfg80211.c b/os_dep/linux/ioctl_cfg80211.c
+index 5b180b6..98eacdf 100644
+--- a/os_dep/linux/ioctl_cfg80211.c
++++ b/os_dep/linux/ioctl_cfg80211.c
+@@ -655,7 +655,6 @@ void rtw_cfg80211_ibss_indicate_connect(_adapter *padapter)
+ 	struct ieee80211_channel *notify_channel;
+ #endif
+ 
+-	DBG_871X(FUNC_ADPT_FMT"\n", FUNC_ADPT_ARG(padapter));
+ 
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))	
+ 	freq = rtw_ch2freq(cur_network->network.Configuration.DSConfig);
+@@ -710,7 +709,7 @@ void rtw_cfg80211_ibss_indicate_connect(_adapter *padapter)
+ 		}
+ 
+ 		if (!rtw_cfg80211_check_bss(padapter))
+-			DBG_871X_LEVEL(_drv_always_, FUNC_ADPT_FMT" BSS not found !!\n", FUNC_ADPT_ARG(padapter));
++                  ;
+ 	}
+ 	//notify cfg80211 that device joined an IBSS
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
+@@ -786,7 +785,7 @@ void rtw_cfg80211_indicate_connect(_adapter *padapter)
+ 
+ check_bss:
+ 	if (!rtw_cfg80211_check_bss(padapter))
+-		DBG_871X_LEVEL(_drv_always_, FUNC_ADPT_FMT" BSS not found !!\n", FUNC_ADPT_ARG(padapter));
++          ;
+ 
+ 	if (rtw_to_roam(padapter) > 0) {
+ 		#if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 39) || defined(COMPAT_KERNEL_RELEASE)
 diff --git a/os_dep/linux/ioctl_linux.c b/os_dep/linux/ioctl_linux.c
-index cce7250..b4a0592 100644
+index 22bb5c2..5a81902 100644
 --- a/os_dep/linux/ioctl_linux.c
 +++ b/os_dep/linux/ioctl_linux.c
-@@ -247,7 +247,6 @@ void rtw_indicate_wx_assoc_event(_adapter *padapter)
+@@ -240,7 +240,6 @@ void rtw_indicate_wx_assoc_event(_adapter *padapter)
  	else
  		_rtw_memcpy(wrqu.ap_addr.sa_data, pmlmepriv->cur_network.network.MacAddress, ETH_ALEN);
  
@@ -118,7 +414,7 @@ index cce7250..b4a0592 100644
  #ifndef CONFIG_IOCTL_CFG80211
  	wireless_send_event(padapter->pnetdev, SIOCGIWAP, &wrqu, NULL);
  #endif
-@@ -263,7 +262,6 @@ void rtw_indicate_wx_disassoc_event(_adapter *padapter)
+@@ -256,7 +255,6 @@ void rtw_indicate_wx_disassoc_event(_adapter *padapter)
  	_rtw_memset(wrqu.ap_addr.sa_data, 0, ETH_ALEN);
  
  #ifndef CONFIG_IOCTL_CFG80211
@@ -126,7 +422,7 @@ index cce7250..b4a0592 100644
  	wireless_send_event(padapter->pnetdev, SIOCGIWAP, &wrqu, NULL);
  #endif
  }
-@@ -8489,8 +8487,6 @@ static int rtw_set_encryption(struct net_device *dev, struct ieee_param *param,
+@@ -8458,8 +8456,6 @@ static int rtw_set_encryption(struct net_device *dev, struct ieee_param *param,
  				
  				if(strcmp(param->u.crypt.alg, "WEP") == 0)
  				{
@@ -135,7 +431,7 @@ index cce7250..b4a0592 100644
  					psta->dot118021XPrivacy = _WEP40_;
  					if(param->u.crypt.key_len==13)
  					{						
-@@ -8499,8 +8495,6 @@ static int rtw_set_encryption(struct net_device *dev, struct ieee_param *param,
+@@ -8468,8 +8464,6 @@ static int rtw_set_encryption(struct net_device *dev, struct ieee_param *param,
  				}
  				else if(strcmp(param->u.crypt.alg, "TKIP") == 0)
  				{						
@@ -144,7 +440,7 @@ index cce7250..b4a0592 100644
  					psta->dot118021XPrivacy = _TKIP_;
  				
  					//DEBUG_ERR("set key length :param->u.crypt.key_len=%d\n", param->u.crypt.key_len);
-@@ -8514,14 +8508,10 @@ static int rtw_set_encryption(struct net_device *dev, struct ieee_param *param,
+@@ -8483,14 +8477,10 @@ static int rtw_set_encryption(struct net_device *dev, struct ieee_param *param,
  				else if(strcmp(param->u.crypt.alg, "CCMP") == 0)
  				{
  
@@ -159,6 +455,20 @@ index cce7250..b4a0592 100644
  					psta->dot118021XPrivacy = _NO_PRIVACY_;
  				}
  						
+diff --git a/os_dep/linux/recv_linux.c b/os_dep/linux/recv_linux.c
+index e37f014..b79bd26 100644
+--- a/os_dep/linux/recv_linux.c
++++ b/os_dep/linux/recv_linux.c
+@@ -679,9 +679,6 @@ int rtw_recv_indicatepkt(_adapter *padapter, union recv_frame *precv_frame)
+ 
+ 	RT_TRACE(_module_recv_osdep_c_,_drv_info_,("\n skb->head=%p skb->data=%p skb->tail=%p skb->end=%p skb->len=%d\n", skb->head, skb->data, skb_tail_pointer(skb), skb_end_pointer(skb), skb->len));
+ 
+-	if (pattrib->eth_type == 0x888e)
+-		DBG_871X_LEVEL(_drv_always_, "recv eapol packet\n");
+-
+ #ifdef CONFIG_AUTO_AP_MODE	
+ #if 1 //for testing
+ #if 1
 -- 
 2.7.4
 

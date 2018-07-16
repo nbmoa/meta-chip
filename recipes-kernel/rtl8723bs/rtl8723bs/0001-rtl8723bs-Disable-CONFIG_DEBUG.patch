@@ -1,7 +1,7 @@
-From be38b827b88c3710a76bf80d695da89d7b8337b7 Mon Sep 17 00:00:00 2001
+From 5f582a7b1fe65bbbb0cc817e6b9cd4310afc1218 Mon Sep 17 00:00:00 2001
 From: Drew Moseley <drew.moseley@northern.tech>
 Date: Sun, 15 Jul 2018 15:52:34 -0400
-Subject: [PATCH] rtl8723bs: Disable CONFIG_DEBUG
+Subject: [PATCH 1/2] rtl8723bs: Disable CONFIG_DEBUG
 
 Signed-off-by: Drew Moseley <drew.moseley@northern.tech>
 ---
@@ -9,10 +9,10 @@ Signed-off-by: Drew Moseley <drew.moseley@northern.tech>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/include/autoconf.h b/include/autoconf.h
-index 5d0d175..c771ea8 100644
+index 9aa596f..d1a33fe 100755
 --- a/include/autoconf.h
 +++ b/include/autoconf.h
-@@ -310,7 +310,7 @@
+@@ -286,7 +286,7 @@
  /*
   * Debug Related Config
   */

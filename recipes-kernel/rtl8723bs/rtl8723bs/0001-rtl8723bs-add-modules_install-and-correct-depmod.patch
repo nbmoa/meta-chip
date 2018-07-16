@@ -1,4 +1,4 @@
-From 01e54c87628793ef67ff3daf959f2a9cfdc5cea0 Mon Sep 17 00:00:00 2001
+From 49f54a3ffebdbb1a24302c7350e374d257cbf529 Mon Sep 17 00:00:00 2001
 From: Jason Abele <jason@jasonabeleconsulting.com>
 Date: Wed, 22 Jul 2015 17:33:59 -0700
 Subject: [PATCH] rtl8723bs: add modules_install and correct depmod
@@ -7,11 +7,11 @@ When building an out of tree module in a cross compile environment,
 respect the $DEPMOD used with the kernel and add a modules_install make
 target.
 ---
- Makefile | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ Makefile | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/Makefile b/Makefile
-index f1437d2..38fbe5b 100644
+index ad290eb..2636845 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -23,6 +23,8 @@ EXTRA_LDFLAGS += --strip-debug
@@ -23,7 +23,7 @@ index f1437d2..38fbe5b 100644
  ########################## WIFI IC ############################
  CONFIG_MULTIDRV = n
  CONFIG_RTL8188E = n
-@@ -1431,6 +1433,8 @@ ifneq ($(USER_MODULE_NAME),)
+@@ -1620,6 +1622,8 @@ ifneq ($(USER_MODULE_NAME),)
  MODULE_NAME := $(USER_MODULE_NAME)
  endif
  
@@ -32,16 +32,17 @@ index f1437d2..38fbe5b 100644
  ifneq ($(KERNELRELEASE),)
  
  rtk_core :=	core/rtw_cmd.o \
-@@ -1494,7 +1498,7 @@ modules:
+@@ -1679,6 +1683,9 @@ all: modules
+ modules:
  	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(shell pwd)  modules
  
- modules_install:
--	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(shell pwd)  INSTALL_MOD_PATH=$(PREFIX) modules_install
++modules_install:
 +	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(shell pwd)  INSTALL_MOD_PATH=$(INSTALL_MOD_PATH) modules_install
- 
++
  strip:
  	$(CROSS_COMPILE)strip $(MODULE_NAME).ko --strip-unneeded
-@@ -1505,7 +1509,7 @@ install:
+ 
+@@ -1688,7 +1695,7 @@ install:
  
  uninstall:
  	rm -f $(MODDESTDIR)/$(MODULE_NAME).ko
