@@ -71,10 +71,16 @@ do_deploy() {
 	    fi
 	fi
 
+	if ! type -path sunxi-fel > /dev/null 2>/dev/null; then
+	   echo Unable to find sunxi-fel in PATH.
+	   echo Please install the sunxi utilities for your desktop OS.
+	   exit -1
+	fi
+
 	wait_for_fel() {
 	    echo -n "waiting for fel..."
 	    for i in {30..0}; do
-	        if ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel ver 2>/dev/null >/dev/null; then
+	        if sunxi-fel ver 2>/dev/null >/dev/null; then
 	            echo "OK"
 	            return 0
 	        fi
@@ -86,12 +92,12 @@ do_deploy() {
 	}
 
 	if wait_for_fel; then
-	    ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel spl ${DEPLOY_DIR_IMAGE}/${SPL_BINARY}
-	    ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel --progress write ${SPL_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/${SPL_ECC_BINARY}
-	    ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel --progress write ${UBOOT_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/${UBOOT_BINARY}
-	    ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel --progress write ${SCRIPTADDR} ${DEPLOY_DIR_IMAGE}/boot.scr
-	    ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel --progress write ${UBI_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/\${UBI_IMAGE}
-	    ${COMPONENTS_DIR}/x86_64/sunxi-tools-native/usr/bin/sunxi-fel exe ${UBOOT_MEMIMG_ADDR}
+	    sunxi-fel spl ${DEPLOY_DIR_IMAGE}/${SPL_BINARY}
+	    sunxi-fel --progress write ${SPL_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/${SPL_ECC_BINARY}
+	    sunxi-fel --progress write ${UBOOT_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/${UBOOT_BINARY}
+	    sunxi-fel --progress write ${SCRIPTADDR} ${DEPLOY_DIR_IMAGE}/boot.scr
+	    sunxi-fel --progress write ${UBI_MEMIMG_ADDR} ${DEPLOY_DIR_IMAGE}/\${UBI_IMAGE}
+	    sunxi-fel exe ${UBOOT_MEMIMG_ADDR}
 	fi
 	EOF
     chmod +x ${DEPLOYDIR}/flash_CHIP_board.sh-${PV}-${PR}
